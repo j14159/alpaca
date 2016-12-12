@@ -4,11 +4,16 @@ export_type ast, symbol, expr
 
 type symbol = Symbol {name: string, line: int}
 
-type expr = Apply (symbol, list expr)
+type expr =
+    symbol
+  | Apply (expr, list expr)
+  | Match {e: expr
+         , clauses: list {pattern: expr
+                        , guards: list expr
+                        , result: expr}}
 
 type ast =
-    symbol
-  | expr
+    expr
   | Comment {multi_line: bool,
              line: int,
              text: string}

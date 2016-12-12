@@ -2,20 +2,25 @@ module alpaca_format
 
 export format/1
 
-import_type alpaca_native_ast.ast
-
 import_type alpaca_native_ast.symbol
 
-format ast_node = format_ast 0 ast_node
+import_type alpaca_native_ast.expr
 
-max_len = 80
+import_type alpaca_native_ast.ast
 
-format_ast depth Symbol {name=name} =
-  let end_of_line = depth + (s_len name) in
-  (end_of_line, name)
-       
---format depth Apply (sym, _) =
+format ast_node = format 0 ast_node
 
-s_len s = beam :string :len [s] with
-  l, is_integer l -> l
-  
+format depth Symbol {name=name} = name
+
+format depth Match {e=e, clauses=cs} =
+  let match_len = alpaca_string.len "match " in
+  let match_parts = ["match", (format match_len e), "with\n"] in
+  alpaca_string.join match_parts " "
+
+test "match format" =
+  let formatted = format 0 Match {
+    e = Symbol {name="y", line=1}
+    , clauses = []}
+  in
+  alpaca_test.assert_equal "match y with\n" formatted
+

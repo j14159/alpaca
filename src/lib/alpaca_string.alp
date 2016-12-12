@@ -1,0 +1,38 @@
+module alpaca_string
+
+export len/1, concat/1, concat/2, join/2
+
+len s =
+  let list_of_s = beam :unicode :characters_to_list [s, :utf8] with
+    l, is_list l -> l
+  in beam :erlang :length [list_of_s] with
+    l, is_integer l -> l
+
+test "len should correctly report a binary string's length" =
+  alpaca_test.assert_equal 3 (len "abc")
+
+test "len should correctly report a non-English string's length" =
+  alpaca_test.assert_equal 2 (len "안녕")
+
+concat s1 s2 = beam :erlang :iolist_to_binary [[s1, s2]] with
+  s, is_string s -> s
+
+test "concat should concatenate two strings" =
+  let c = concat "hello, " "world" in
+  alpaca_test.assert_equal "hello, world" c
+
+concat list_of_strings = beam :erlang :iolist_to_binary [list_of_strings] with
+  s, is_string s -> s
+
+{- Given a list of strings and one that should be interleaved between them
+   join them all into one string.  E.g. ["a", "b", "c"] with "-" should become
+   "a-b-c".
+ -}
+join [s] _ = s
+
+join (next_string :: tail) with_str =
+     concat [next_string, with_str, (join tail with_str)]
+
+test "joining strings with space" =
+     let res = join ["a", "b", "c"] " " in
+     alpaca_test.assert_equal "a b c" res
